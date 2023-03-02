@@ -32,6 +32,7 @@ do
     do
         input_video=${file}
         echo ${input_video}
+        # mkdir -p "${resize_dir}/h${format}"
         output_prefix="${resize_dir}/h${format}/${name}_${width}x${height}"
         
         # crf range

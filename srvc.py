@@ -14,34 +14,32 @@ from utils.misc import get_metrics, SaveHelper as save_helper
 from utils.video_reader import VideoCaptureYUV, fetch_chunk_frames, get_config
 
 parser = argparse.ArgumentParser(description='Run SRVC training & inference.')
-parser.add_argument('hr_video', type=str, default=None, help='Directory for the HR video')
-parser.add_argument('lr_video', type=str, default=None, help='Directory for the LR video')
-parser.add_argument('save_path', type=str, default=None, help='Directory to save the results')
-parser.add_argument('load_path', type=str, default='', help='Directory for loading the SR model checkpoint(s)')
-parser.add_argument('model_name', type=str, default=None, help='SR model variant')
-parser.add_argument('lr', type=float, default=1e-3, help='Learning rate')
-parser.add_argument('batch_size', type=int, default=1, help='Train batch size')
-parser.add_argument('start_time', tpye=float, default=0, help='Training data start time in the video')
-parser.add_argument('end_time', tpye=float, default=10, help='Training data interval end time in the video')
-parser.add_argument('sampling_interval', tpye=float, default=0, help='Sampling time interval (seconds)')
-parser.add_argument('update_interval', tpye=float, default=10, help='Model update interval (seconds)')
-parser.add_argument('coord_frac', tpye=float, default=1.0, help='Fraction of trainable model parameters')
-parser.add_argument('num_epochs', type=int, default=1, help='Number of epochs')
-parser.add_argument('fps', type=str, default='24',
-                    help='Video framerate (only required for raw video files); it also accepts formats like 24000/1001')
-parser.add_argument('ff_nchunks', type=int, default=0, help='fast-forward n chunks')
-parser.add_argument('inference', type=bool, default=False, help='Run inference test first')
-parser.add_argument('single_checkpoint', type=bool, default=False, help='Run the inference using only one checkpoint')
-parser.add_argument('crop_augment', type=bool, default=False, help='Add random crops augmentation')
-parser.add_argument('l1_loss', type=bool, default=False, help='Use L1 loss instead of L2')
-parser.add_argument('dump_samples', type=bool, default=False, help='Save the inference sample frames')
-parser.add_argument('hr_size', type=str, default='1920,1080', help='Comma-separated HR video size, i.e.,  width,height')
-parser.add_argument('lr_size', type=str, default='480,270', help='Comma-separated LR video size, i.e., width,height')
-parser.add_argument('online', type=bool, default=False,
-                    help='Uses the model trained till the beginning of each chunk for inference on that chunk (only '
-                         'effects the inference process)')
+parser.add_argument('--hr_video', type=str, default=None, help='Directory for the HR video')
+parser.add_argument('--lr_video', type=str, default=None, help='Directory for the LR video')
+parser.add_argument('--save_path', type=str, default=None, help='Directory to save the results')
+parser.add_argument('--load_path', type=str, default='', help='Directory for loading the SR model checkpoint(s)')
+parser.add_argument('--model_name', type=str, default=None, help='SR model variant')
+parser.add_argument('--lr', type=float, default=1e-3, help='Learning rate')
+parser.add_argument('--batch_size', type=int, default=1, help='Train batch size')
+parser.add_argument('--start_time', type=float, default=0, help='Training data start time in the video')
+parser.add_argument('--end_time', type=float, default=10, help='Training data interval end time in the video')
+parser.add_argument('--sampling_interval', type=float, default=0, help='Sampling time interval (seconds)')
+parser.add_argument('--update_interval', type=float, default=10, help='Model update interval (seconds)')
+parser.add_argument('--coord_frac', type=float, default=1.0, help='Fraction of trainable model parameters')
+parser.add_argument('--num_epochs', type=int, default=1, help='Number of epochs')
+parser.add_argument('--fps', type=str, default='24', help='Video framerate (only required for raw video files); it also accepts formats like 24000/1001')
+parser.add_argument('--ff_nchunks', type=int, default=0, help='fast-forward n chunks')
+parser.add_argument('--inference', type=bool, default=False, help='Run inference test first')
+parser.add_argument('--single_checkpoint', type=bool, default=False, help='Run the inference using only one checkpoint')
+parser.add_argument('--crop_augment', type=bool, default=False, help='Add random crops augmentation')
+parser.add_argument('--l1_loss', type=bool, default=False, help='Use L1 loss instead of L2')
+parser.add_argument('--dump_samples', type=bool, default=False, help='Save the inference sample frames')
+parser.add_argument('--hr_size', type=str, default='1920,1080', help='Comma-separated HR video size, i.e.,  width,height')
+parser.add_argument('--lr_size', type=str, default='480,270', help='Comma-separated LR video size, i.e., width,height')
+parser.add_argument('--online', type=bool, default=False, help='Uses the model trained till the beginning of each chunk for inference on that chunk (only effects the inference process)')
 
 args = parser.parse_args()
+
 
 def gen_video():
     cnfg = get_config(args)
@@ -75,6 +73,7 @@ def gen_video():
             chunk_end = min(chunk_end, cnfg['end_time'])
             if chunk_start >= cnfg['end_time'] or not hr_cap.isOpened():
                 break
+            
             chunk_frames = fetch_chunk_frames(hr_cap,
                                               cnfg['n_chunk_frames'],
                                               cnfg['step_frame'],
@@ -124,7 +123,7 @@ def augment(image, label, chunk_no):
 
 
 # Read the video information
-cnfg = get_config()
+cnfg = get_config(args)
 fps = cnfg['fps']
 
 # DNN model
@@ -186,6 +185,7 @@ cubic_metrics = get_metrics(rgb_cubic_01, rgb_hr_01)
 
 init = tf.initializers.global_variables()
 saver = tf.train.Saver(var_list=tvars)
+
 manual_saver = save_helper(graph=tf.get_default_graph(), map_fun=lambda x: x)
 sum_writer = tf.summary.FileWriter('%s/summary/log' % args.save_path)
 tf.summary.scalar('total_loss', loss)
