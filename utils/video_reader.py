@@ -3,7 +3,7 @@ import numpy as np
 
 def fetch_chunk_frames(cap, n_chunk_frames, step_frame, size=None):
     frames = []
-    cap_type = 'cv2_cap' if isinstance(cap, cv2.VideoCapture) else 'yuv_cap'
+    cap_type = 'cv2_cap' if isinstance(cap, type(cv2.VideoCapture)) else 'yuv_cap'
     for f in range(n_chunk_frames * step_frame):
         assert cap.isOpened()
         if f % step_frame == 0:
@@ -49,6 +49,7 @@ def get_config(args):
             fps = int(round(float(fps)))
     else:
         fps = int(round(hr_cap.get(cv2.CAP_PROP_FPS)))
+    
     hr_cap.release()
 
     step_time = args.sampling_interval
